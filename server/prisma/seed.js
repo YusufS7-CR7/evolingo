@@ -337,15 +337,7 @@ function ensureRequirements(lesson, index) {
 }
 
 async function main() {
-    console.log('Cleaning up content (preserving progress)...');
-    // We only delete lessons/modules/courses to refresh content. 
-    // We do NOT delete progress to keep user data safe.
-    await prisma.progress.deleteMany({});
-    await prisma.lesson.deleteMany({});
-    await prisma.module.deleteMany({});
-    await prisma.course.deleteMany({});
-
-    console.log('Seeding...');
+    console.log('Seeding courses, modules, and lessons (upsert only, nothing is deleted)...');
 
     for (const lvl of levelsMap) {
         const courseId = `${lvl.id}-course`;
