@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  age       String?  // e.g., "18-24"
+  goal      String?  // e.g., "conversational"
+  level     String   @default("Beginner") // Beginner, Elementary, Intermediate, Upper-Intermediate, Advanced
+  xp        Int      @default(0)
+  coins     Int      @default(0)
+  streak    Int      @default(0)
+  lastStreakUpdate DateTime @default(now())
+  hearts    Int      @default(5)
+  lastHeartReset DateTime @default(now())
+  lastLogin DateTime @default(now())
+  streakFreezes Int      @default(0)
+  streakRepairs Int      @default(0)
+  isPro     Boolean  @default(false)
+  proStartedAt DateTime?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  
+  // Shop / Streak Logic
+  oldStreak       Int?     @default(0) // Stores the streak before it was lost
+  lastStreakLostAt DateTime? // When the streak was lost
+  lastRepairUsedAt DateTime? // When the repair was last used (14 day cooldown)
+
+  progress  Progress[]
+  groups    UserGroup[]
+  messages  Message[]
+}
+
+model Course {
+  id          String   @id // e.g., "beginner-a1"
+  level       String
+  title       String
+  description String
+  modules     Module[]
+}
+
+model Module {
+  id       String   @id
+  courseId String
+  title    String
+  course   Course   @relation(fields: [courseId], references: [id])
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id       String   @id
+  moduleId String
+  title    String
+  type     String   // vocabulary, grammar
+  content  String   // JSON string of words/theory/practice
+  createdAt DateTime @default(now())
+  
+  module   Module   @relation(fields: [moduleId], references: [id])
+  progress Progress[]
+}
+
+model Progress {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  lessonId    String
+  score       Int
+  completedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+}
+
+model Group {
+  id          Int      @id @default(autoincrement())
+  name        String
+  level       String
+  maxMembers  Int      @default(10)
+  createdAt   DateTime @default(now())
+  isPublic    Boolean  @default(true)
+  
+  members  UserGroup[]
+  messages Message[]
+}
+
+model UserGroup {
+  userId  Int
+  groupId Int
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  groupId   Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+}
