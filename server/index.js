@@ -1145,6 +1145,24 @@ app.post('/api/admin/lessons', verifyAdmin, async (req, res) => {
     }
 });
 
+app.put('/api/admin/lessons/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { title, content } = req.body;
+    try {
+        const lesson = await prisma.lesson.update({
+            where: { id },
+            data: {
+                title,
+                content: typeof content === 'string' ? content : JSON.stringify(content)
+            }
+        });
+        res.json(lesson);
+    } catch (error) {
+        console.error('[Auth Error]', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // --- Pro & AI Features ---
 app.post('/api/user/upgrade-pro', authenticateToken, async (req, res) => {
     try {
