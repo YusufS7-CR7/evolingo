@@ -21,6 +21,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Fallback chain: try models in order until one works
 const AI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
     "gemini-2.0-flash",
     "gemini-flash-latest",
     "gemini-pro-latest"
@@ -40,8 +42,10 @@ async function generateWithFallback(prompt) {
             const msg = err.message || '';
             const isQuota = status === 429 || msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('exhausted');
             const isNotFound = status === 404 || msg.includes('404') || msg.toLowerCase().includes('not found');
-            if (isQuota || isNotFound) {
-                console.warn(`[AI] Model ${modelName} unavailable (${status}), trying next...`);
+            const isOverloaded = status === 503 || status === 500 || msg.includes('503') || msg.includes('500') || msg.toLowerCase().includes('overloaded') || msg.toLowerCase().includes('high demand');
+
+            if (isQuota || isNotFound || isOverloaded) {
+                console.warn(`[AI] Model ${modelName} unavailable/overloaded (${status}), trying next...`);
                 lastError = err;
                 continue;
             }
